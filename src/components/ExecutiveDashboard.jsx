@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { platformStats, mockTenders } from '../mockPlatformData';
 import { TrendingUp, FileCheck, AlertCircle, ShieldAlert, Banknote, Users } from 'lucide-react';
@@ -7,16 +7,61 @@ import { StatCard } from './StatCard';
 
 const ExecutiveDashboard = () => {
   const navigate = useNavigate();
+  const [timeFilter, setTimeFilter] = useState('Month');
+  
+  const getMultiplier = () => {
+    switch(timeFilter) {
+      case 'Day': return 0.03;
+      case 'Week': return 0.25;
+      case 'Month': return 1;
+      case 'Year': return 12;
+      default: return 1;
+    }
+  };
+  const m = getMultiplier();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      
+      {/* Dashboard Header with Time Filter */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '700', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>Executive Overview</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Real-time procurement metrics and AI insights</p>
+        </div>
+        
+        {/* Segmented Control */}
+        <div style={{ display: 'flex', background: 'var(--glass-border)', padding: '0.25rem', borderRadius: '8px' }}>
+          {['Day', 'Week', 'Month', 'Year'].map(tf => (
+            <button
+              key={tf}
+              onClick={() => setTimeFilter(tf)}
+              style={{
+                background: timeFilter === tf ? 'var(--bg-secondary)' : 'transparent',
+                color: timeFilter === tf ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                fontWeight: timeFilter === tf ? '600' : '500',
+                boxShadow: timeFilter === tf ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                border: 'none',
+                padding: '0.4rem 1rem',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                fontSize: '0.85rem'
+              }}
+            >
+              {tf}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-        <StatCard label="Total Tenders Monitored" value={platformStats.totalTenders} icon={<FileCheck size={28} />} trend={5} delay="delay-1" description="The total number of Notice Inviting Tenders (NITs) currently being tracked and evaluated by the system." />
-        <StatCard label="Total Vendors Analyzed" value={platformStats.totalVendors} icon={<Users size={28} />} trend={12} delay="delay-1" color="success" description="Number of unique vendor profiles dynamically scanned and scored across all active bids." />
-        <StatCard label="Documents Processed (OCR/AI)" value={(platformStats.totalDocumentsProcessed).toLocaleString()} icon={<TrendingUp size={28} />} trend={45} delay="delay-2" description="Total pages of technical bids, certifications, and compliance documents processed through OCR." />
-        <StatCard label="Active Cartel / Risk Alerts" value={platformStats.activeCartelAlerts} icon={<ShieldAlert size={28} />} trend={-2} delay="delay-2" color="danger" description="High-priority warnings regarding potential collusion, overlapping directorships, or bidding anomalies." />
-        <StatCard label="Overall System Accuracy" value={platformStats.systemAccuracy} icon={<AlertCircle size={28} />} trend={1.2} delay="delay-3" color="success" description="Confidence metric of the AI Engine across all recent extractions and semantic evaluations." />
-        <StatCard label="Automated Cost Savings" value={platformStats.automatedSavings} icon={<Banknote size={28} />} trend={22} delay="delay-3" color="success" description="Estimated monetary savings achieved via automated market benchmarking and price justification." />
+        <StatCard label="Tenders Monitored" value={Math.round(platformStats.totalTenders * m)} icon={<FileCheck size={28} />} trend={5} delay="delay-1" description={`Notice Inviting Tenders tracked this ${timeFilter.toLowerCase()}.`} />
+        <StatCard label="Vendors Analyzed" value={Math.round(platformStats.totalVendors * m)} icon={<Users size={28} />} trend={12} delay="delay-1" color="success" description={`Vendor profiles dynamically scanned this ${timeFilter.toLowerCase()}.`} />
+        <StatCard label="Documents Processed" value={Math.round(platformStats.totalDocumentsProcessed * m).toLocaleString()} icon={<TrendingUp size={28} />} trend={45} delay="delay-2" description={`Total pages processed through OCR this ${timeFilter.toLowerCase()}.`} />
+        <StatCard label="Cartel Alerts" value={Math.max(1, Math.round(platformStats.activeCartelAlerts * m))} icon={<ShieldAlert size={28} />} trend={-2} delay="delay-2" color="danger" description={`High-priority collusion warnings this ${timeFilter.toLowerCase()}.`} />
+        <StatCard label="System Accuracy" value={platformStats.systemAccuracy} icon={<AlertCircle size={28} />} trend={1.2} delay="delay-3" color="success" description="Confidence metric of the AI Engine across all semantic evaluations." />
+        <StatCard label="Cost Savings (Est.)" value={`₹${Math.round(parseFloat(platformStats.automatedSavings.replace(/[^0-9.]/g, '')) * m)} Cr`} icon={<Banknote size={28} />} trend={22} delay="delay-3" color="success" description={`Estimated monetary savings achieved this ${timeFilter.toLowerCase()}.`} />
       </div>
 
       <div className="glass-card animate-fade-in delay-3" style={{ padding: '2rem' }}>
