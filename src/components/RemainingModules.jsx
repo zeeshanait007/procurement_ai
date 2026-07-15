@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { mockTenders, mockVendors } from '../mockPlatformData';
 import { 
   FileText, FileSignature, BrainCircuit, Scale, Users2, ShieldCheck, 
@@ -17,39 +17,136 @@ const PageHeader = ({ title, icon: Icon, actionLabel, onAction }) => (
   </div>
 );
 
-// 1. Tender Management
+const SmartNITWizard = ({ closeModal, showToast }) => {
+  const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [cvcFixed, setCvcFixed] = useState(false);
+  const [category, setCategory] = useState('Goods');
+
+  const handleGenerate = () => {
+    setIsLoading(true);
+    setStep(2);
+    setTimeout(() => {
+      setIsLoading(false);
+      setStep(3);
+    }, 2000); // Simulate AI thinking
+  };
+
+  const handleFixCVC = () => {
+    setCvcFixed(true);
+  };
+
+  const handlePublish = () => {
+    closeModal();
+    showToast('NIT Published Successfully to SECL Portal', 'success');
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', minHeight: '300px' }}>
+      {/* Progress Indicator */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+        {[1, 2, 3, 4].map(s => (
+          <div key={s} style={{ 
+            flex: 1, height: '4px', background: step >= s ? 'var(--accent-primary)' : 'var(--glass-border)',
+            marginRight: s < 4 ? '4px' : '0', borderRadius: '2px', transition: 'all 0.3s'
+          }} />
+        ))}
+      </div>
+
+      {/* Step 1: Input */}
+      {step === 1 && (
+        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Define Tender Parameters</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>The AI will automatically draft the NIT based on SECL templates and past historical data.</p>
+          <div>
+            <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Tender Reference</label>
+            <input type="text" defaultValue="NIT/2026/012" style={{ width: '100%', padding: '0.75rem', background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', borderRadius: '6px', marginTop: '0.25rem' }} />
+          </div>
+          <div>
+            <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Material Category</label>
+            <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: '100%', padding: '0.75rem', background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', borderRadius: '6px', marginTop: '0.25rem' }}>
+              <option>Heavy Earth Moving Machinery (HEMM)</option>
+              <option>IT Infrastructure</option>
+              <option>Mining Explosives</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Estimated Value (₹)</label>
+            <input type="text" defaultValue="25,00,00,000" style={{ width: '100%', padding: '0.75rem', background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', borderRadius: '6px', marginTop: '0.25rem' }} />
+          </div>
+          
+          <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '2rem' }}>
+            <button className="btn btn-outline" onClick={closeModal}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleGenerate}><BrainCircuit size={18} /> Generate Smart NIT</button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 2: Loading AI */}
+      {step === 2 && (
+        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 0', gap: '1rem' }}>
+          <RefreshCw className="animate-spin text-accent-primary" size={40} />
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>AI is drafting the Tender...</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Pulling SECL legal clauses, EMD rules, and CVC guidelines.</p>
+        </div>
+      )}
+
+      {/* Step 3 & 4: Review Draft & CVC Warning */}
+      {(step === 3 || step === 4) && (
+        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Review Generated Clauses</h3>
+          
+          <div style={{ padding: '1rem', background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', borderRadius: '8px', fontSize: '0.9rem', maxHeight: '200px', overflowY: 'auto' }}>
+            <strong>3.1 EMD Requirement:</strong> The bidder must submit an Earnest Money Deposit (EMD) of ₹50,00,000 via NEFT/RTGS.<br/><br/>
+            <strong>4.1 Turnover Criteria:</strong> Average annual financial turnover during the last 3 years should be at least 30% of the estimated cost.<br/><br/>
+            <span style={{ background: cvcFixed ? 'transparent' : 'rgba(220, 38, 38, 0.1)', padding: '0.25rem', borderRadius: '4px', transition: 'background 0.3s' }}>
+              <strong>4.2 Local Vendor Preference:</strong> 
+              {cvcFixed ? 
+                " Bidding is open to all domestic vendors meeting Make in India standards." : 
+                " Bidding is restricted to vendors with registered offices within a 50km radius of SECL headquarters."}
+            </span>
+          </div>
+
+          {!cvcFixed && step === 3 && (
+            <div className="animate-fade-in" style={{ padding: '1rem', background: 'rgba(220, 38, 38, 0.05)', borderLeft: '4px solid var(--danger)', borderRadius: '4px', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+              <ShieldCheck color="var(--danger)" size={24} style={{ flexShrink: 0 }} />
+              <div>
+                <h4 style={{ color: 'var(--danger)', fontWeight: '600', marginBottom: '0.25rem' }}>CVC Compliance Warning</h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                  Clause 4.2 restricts bidding based on geographical radius. This violates Central Vigilance Commission (CVC) guidelines on ensuring broad-based open competition.
+                </p>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button className="btn btn-primary" onClick={handleFixCVC} style={{ background: 'var(--danger)', fontSize: '0.8rem', padding: '0.5rem 1rem' }}>Accept AI Recommendation & Fix</button>
+                  <button className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}>Ignore (Risk)</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {cvcFixed && (
+            <div className="animate-fade-in" style={{ padding: '0.75rem', background: 'rgba(5, 150, 105, 0.1)', color: 'var(--success)', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+              <CheckCircle size={18} /> Clause 4.2 updated successfully. Document is now CVC compliant.
+            </div>
+          )}
+
+          <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1rem' }}>
+            <button className="btn btn-outline" onClick={() => setStep(1)}>Back</button>
+            <button className="btn btn-primary" onClick={handlePublish} disabled={!cvcFixed && step === 3}>
+              <CheckCircle size={18} /> Send to Committee for Approval
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const TenderManagement = () => {
   const { showToast } = useToast();
   const { showModal, closeModal } = useModal();
 
   const handleCreateNIT = () => {
-    const modalBody = (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div>
-          <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Tender Reference Number</label>
-          <input type="text" defaultValue="NIT/2026/004" style={{ width: '100%', padding: '0.75rem', background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', borderRadius: '6px', marginTop: '0.25rem' }} />
-        </div>
-        <div>
-          <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Category</label>
-          <select style={{ width: '100%', padding: '0.75rem', background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', borderRadius: '6px', marginTop: '0.25rem' }}>
-            <option>Goods</option><option>Services</option><option>Works</option>
-          </select>
-        </div>
-        <div>
-          <label style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Evaluation Rule Matrix</label>
-          <select style={{ width: '100%', padding: '0.75rem', background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', borderRadius: '6px', marginTop: '0.25rem' }}>
-            <option>Heavy Machinery Standard Eval</option><option>IT Infrastructure Pre-Qual</option>
-          </select>
-        </div>
-      </div>
-    );
-    const modalActions = (
-      <>
-        <button className="btn btn-outline" onClick={closeModal}>Cancel</button>
-        <button className="btn btn-primary" onClick={() => { closeModal(); showToast('New NIT Created Successfully', 'success'); }}>Publish NIT</button>
-      </>
-    );
-    showModal('Create New Tender (NIT)', modalBody, modalActions);
+    showModal('Smart NIT Wizard', <SmartNITWizard closeModal={closeModal} showToast={showToast} />, null);
   };
 
   return (
