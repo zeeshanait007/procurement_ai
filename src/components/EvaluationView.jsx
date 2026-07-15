@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { mockDocumentText, mockEvaluationCriteria } from '../mockData';
-import { CheckCircle2, XCircle, FileSearch, Save, Send, FileWarning, Search, Info, Bot, Brain, Sparkles, Mail, CalendarClock, TrendingDown, ShieldAlert, FileMinus } from 'lucide-react';
+import { CheckCircle2, XCircle, FileSearch, Save, Send, FileWarning, Search, Info, Bot, Brain, Sparkles, Mail, CalendarClock, TrendingDown, ShieldAlert, FileMinus, List, Map, ChevronRight } from 'lucide-react';
 import { useToast, useModal } from '../App';
 
 const EvaluationView = () => {
   const [criteria, setCriteria] = useState(mockEvaluationCriteria);
   const [anomalyScannerActive, setAnomalyScannerActive] = useState(false);
+  const [activeDocumentSection, setActiveDocumentSection] = useState('Financials (Q1-Q4)');
   const { showToast } = useToast();
   const { showModal, closeModal } = useModal();
 
@@ -323,9 +324,11 @@ const EvaluationView = () => {
   return (
     <div style={{ display: 'flex', gap: '2rem', height: 'calc(100vh - 120px)' }}>
       
-      {/* Left side: Source Document (Simplified) */}
-      <div className="glass-card animate-fade-in" style={{ flex: '1', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Left side: Source Document (Advanced Viewer) */}
+      <div className="glass-card animate-fade-in" style={{ flex: '1.2', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        
+        {/* Header & Anomaly Scanner */}
+        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <FileSearch size={22} className="text-accent-primary" />
             <h2 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Source Document (AI Parsed)</h2>
@@ -338,30 +341,101 @@ const EvaluationView = () => {
               if (!anomalyScannerActive) showToast('Visual Anomaly Scanner Activated', 'warning');
             }}
           >
-            <Search size={14} style={{ marginRight: '6px' }} /> {anomalyScannerActive ? 'Scanning for Fraud...' : 'Anomaly Scanner'}
+            <ShieldAlert size={14} style={{ marginRight: '6px' }} /> {anomalyScannerActive ? 'Scanning for Fraud...' : 'Anomaly Scanner'}
           </button>
         </div>
+
+        {/* AI TL;DR Summary & Semantic Search */}
+        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-primary)' }}>
+          {/* AI Summary Box */}
+          <div style={{ background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '8px', padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+            <Sparkles size={20} className="text-accent-primary" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--accent-primary)', marginBottom: '0.25rem' }}>AI Executive Summary</h4>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                <strong>340-page technical bid.</strong> All required signatures are digitally verified. <span style={{ color: 'var(--danger)', fontWeight: '600' }}>1 Anomaly Found:</span> Revenue mismatch between Q2 filing and Audit Report (page 112).
+              </p>
+            </div>
+          </div>
+          
+          {/* Semantic Search Bar */}
+          <div style={{ position: 'relative' }}>
+            <input type="text" placeholder="Ask AI: 'Where is the warranty clause?' or search text..." style={{ width: '100%', padding: '0.85rem 1rem 0.85rem 2.5rem', borderRadius: '8px', border: '1px solid var(--glass-border)', fontSize: '0.9rem', background: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
+            <Bot size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+            <button style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', background: 'var(--accent-primary)', border: 'none', color: 'white', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: '600' }}>Find</button>
+          </div>
+        </div>
         
-        <div style={{ flex: 1, padding: '2rem', overflowY: 'auto', background: 'var(--bg-primary)', fontFamily: 'monospace', fontSize: '0.9rem', lineHeight: '1.8' }}>
-          {mockDocumentText.split('\n').map((line, i) => {
-            let isAnomaly = anomalyScannerActive && line.includes('Dec 2027');
-            let highlight = line.includes('₹55.23 Crores') || line.includes('NCL Order') || line.includes('22AAAAA0000A1Z5');
+        {/* Split View: Mini-Map and Content */}
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+          
+          {/* Document Content View */}
+          <div style={{ flex: 1, padding: '2rem 1.5rem', overflowY: 'auto', background: 'var(--bg-secondary)', fontFamily: 'monospace', fontSize: '0.9rem', lineHeight: '1.8' }}>
             
-            return (
-              <div key={i} style={{ 
-                minHeight: '1.5em', 
-                backgroundColor: highlight ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-                padding: highlight ? '0 8px' : '0',
-                borderLeft: highlight ? '3px solid var(--accent-primary)' : '3px solid transparent'
-              }}>
-                {isAnomaly ? (
-                  <span style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', border: '1px solid var(--danger)', padding: '2px 4px', borderRadius: '4px', position: 'relative' }} title="Warning: Font inconsistency detected. Possible document tampering.">
-                    {line}
-                  </span>
-                ) : line}
-              </div>
-            );
-          })}
+            <div style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)', borderBottom: '1px dashed var(--glass-border)', paddingBottom: '0.5rem' }}>
+              &gt; JUMPED TO SECTION: {activeDocumentSection.toUpperCase()}
+            </div>
+
+            {mockDocumentText.split('\n').map((line, i) => {
+              // Create a slight visual difference based on section length by omitting some lines pseudo-randomly
+              if ((activeDocumentSection.length + i) % 7 === 0) return null;
+              
+              let isAnomaly = anomalyScannerActive && line.includes('Dec 2027');
+              let highlight = line.includes('₹55.23 Crores') || line.includes('NCL Order') || line.includes('22AAAAA0000A1Z5');
+              
+              return (
+                <div key={i} className="animate-fade-in" style={{ 
+                  minHeight: '1.5em', 
+                  backgroundColor: highlight ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                  padding: highlight ? '0 8px' : '0',
+                  borderLeft: highlight ? '3px solid var(--accent-primary)' : '3px solid transparent'
+                }}>
+                  {isAnomaly ? (
+                    <span style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', border: '1px solid var(--danger)', padding: '2px 4px', borderRadius: '4px', position: 'relative' }} title="Warning: Font inconsistency detected. Possible document tampering.">
+                      {line}
+                    </span>
+                  ) : line}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Smart Mini-Map Sidebar */}
+          <div style={{ width: '180px', borderLeft: '1px solid var(--glass-border)', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Map size={14} /> Mini-Map
+            </div>
+            <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto' }}>
+              {[
+                { label: 'Cover Letter' },
+                { label: 'Financials (Q1-Q4)' },
+                { label: 'Audit Reports' },
+                { label: 'ISO Certs' },
+                { label: 'Tech Specs' },
+                { label: 'Bank Guarantees' },
+                { label: 'Signatures' }
+              ].map((item, idx) => {
+                const isActive = activeDocumentSection === item.label;
+                return (
+                  <div key={idx} onClick={() => setActiveDocumentSection(item.label)} style={{ 
+                    fontSize: '0.85rem', 
+                    color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)', 
+                    fontWeight: isActive ? '600' : '400',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    borderLeft: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                    paddingLeft: '8px',
+                    transition: 'all 0.2s',
+                    marginLeft: '-1rem'
+                  }}>
+                    {item.label}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -384,15 +458,15 @@ const EvaluationView = () => {
             </div>
           </div>
           
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'nowrap', alignItems: 'center' }}>
-            <button className="btn btn-outline" onClick={handleViewAllRecommendations} style={{ color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)', padding: '0.5rem 0.8rem', fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
-              <Sparkles size={16} style={{ marginRight: '6px' }} /> AI Recommendations
+          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'nowrap', alignItems: 'center' }}>
+            <button className="btn btn-outline" onClick={handleViewAllRecommendations} style={{ color: 'var(--accent-primary)', borderColor: 'var(--accent-primary)', padding: '0.4rem 0.6rem', fontSize: '0.8rem', fontWeight: '600', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+              <Sparkles size={14} style={{ marginRight: '4px' }} /> AI Recommendations
             </button>
-            <button className="btn btn-outline" onClick={generateShortfallNotice} style={{ color: 'var(--warning)', borderColor: 'var(--warning)', padding: '0.5rem 0.8rem', fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
-              <FileWarning size={16} style={{ marginRight: '6px' }} /> Draft Shortfall
+            <button className="btn btn-outline" onClick={generateShortfallNotice} style={{ color: 'var(--warning)', borderColor: 'var(--warning)', padding: '0.4rem 0.6rem', fontSize: '0.8rem', fontWeight: '600', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+              <FileWarning size={14} style={{ marginRight: '4px' }} /> Draft Shortfall
             </button>
-            <button className="btn btn-primary" onClick={handleSaveEvaluation} style={{ padding: '0.5rem 0.8rem', fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
-              <Save size={16} style={{ marginRight: '6px' }} /> Save Review
+            <button className="btn btn-primary" onClick={handleSaveEvaluation} style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem', fontWeight: '600', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+              <Save size={14} style={{ marginRight: '4px' }} /> Save Review
             </button>
           </div>
         </div>
