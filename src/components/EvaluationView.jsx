@@ -4,7 +4,35 @@ import { CheckCircle2, XCircle, FileSearch, Save, Send, FileWarning, Search, Inf
 import { useToast, useModal } from '../App';
 
 const EvaluationView = () => {
-  const [criteria, setCriteria] = useState(mockEvaluationCriteria);
+  const [selectedVendorId, setSelectedVendorId] = useState('v1');
+  
+  const VENDORS = {
+    "v1": {
+      name: "XYZ Mining Equipments",
+      text: mockDocumentText,
+      criteria: mockEvaluationCriteria,
+    },
+    "v2": {
+      name: "ABC Corp Ltd.",
+      text: mockDocumentText.replace("XYZ Mining Equipments Pvt. Ltd.", "ABC Corp Ltd.").replace("₹55.23 Crores", "₹45.10 Crores").replace("Dec 2027", "Jan 2025 (Expired)"),
+      criteria: mockEvaluationCriteria.map(c => {
+        if(c.id === 'c1') return {...c, extracted: "₹45.10 Crores", status: "Failed", confidence: 99};
+        if(c.id === 'c3') return {...c, extracted: "Expired Jan 2025", status: "Failed", shortfall: true};
+        return c;
+      })
+    },
+    "v3": {
+      name: "Global Heavy Industries",
+      text: mockDocumentText.replace("XYZ Mining Equipments Pvt. Ltd.", "Global Heavy Industries").replace("₹55.23 Crores", "₹120.5 Crores").replace("22AAAAA0000A1Z5", "[NOT FOUND]"),
+      criteria: mockEvaluationCriteria.map(c => {
+        if(c.id === 'c1') return {...c, extracted: "₹120.5 Crores", status: "Met"};
+        if(c.id === 'c2') return {...c, extracted: "Missing from bid", status: "Failed", shortfall: true};
+        return c;
+      })
+    }
+  };
+
+  const activeVendor = VENDORS[selectedVendorId];
   const [anomalyScannerActive, setAnomalyScannerActive] = useState(false);
   const [activeDocumentSection, setActiveDocumentSection] = useState('Financials (Q1-Q4)');
   const { showToast } = useToast();
@@ -376,12 +404,12 @@ const EvaluationView = () => {
               &gt; JUMPED TO SECTION: {activeDocumentSection.toUpperCase()}
             </div>
 
-            {mockDocumentText.split('\n').map((line, i) => {
+            {activeVendor.text.split('\n').map((line, i) => {
               // Create a slight visual difference based on section length by omitting some lines pseudo-randomly
               if ((activeDocumentSection.length + i) % 7 === 0) return null;
               
-              let isAnomaly = anomalyScannerActive && line.includes('Dec 2027');
-              let highlight = line.includes('₹55.23 Crores') || line.includes('NCL Order') || line.includes('22AAAAA0000A1Z5');
+              let isAnomaly = anomalyScannerActive && (line.includes('Dec 2027') || line.includes('Jan 2025'));
+              let highlight = line.includes('Crores') || line.includes('NCL Order') || line.includes('22AAAAA') || line.includes('NOT FOUND');
               
               return (
                 <div key={i} className="animate-fade-in" style={{ 
@@ -446,9 +474,19 @@ const EvaluationView = () => {
         <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
-                XYZ Mining Equipments
-              </h2>
+              <select 
+                value={selectedVendorId} 
+                onChange={(e) => setSelectedVendorId(e.target.value)}
+                style={{ 
+                  fontSize: '1.5rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)', 
+                  background: 'transparent', border: '1px solid var(--glass-border)', borderRadius: '8px', 
+                  padding: '0.25rem 0.5rem', cursor: 'pointer' 
+                }}
+              >
+                <option value="v1">XYZ Mining Equipments</option>
+                <option value="v2">ABC Corp Ltd.</option>
+                <option value="v3">Global Heavy Industries</option>
+              </select>
               <button className="btn btn-outline" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem', borderRadius: '50px' }} onClick={openVendor360Profile}>
                 <Info size={14} style={{marginRight: '6px'}} /> 360 Profile
               </button>
@@ -473,7 +511,7 @@ const EvaluationView = () => {
 
         {/* Criteria List (Grid Layout) */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
-          {criteria.map((c) => (
+          {activeVendor.criteria.map((c) => (
             <div key={c.id} className="glass-card" style={{ 
               padding: '1.5rem', 
               borderLeft: `4px solid ${c.status === 'Met' ? 'var(--success)' : 'var(--danger)'}`,
