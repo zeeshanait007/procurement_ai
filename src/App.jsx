@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, BrainCircuit, Users, ShieldCheck, 
-  Settings, LogOut, Bell, Briefcase, MessageSquare
+  Settings, LogOut, Bell, Briefcase, MessageSquare, UploadCloud
 } from 'lucide-react';
 
 import ExecutiveDashboard from './components/ExecutiveDashboard';
@@ -15,6 +15,7 @@ import {
   RuleEngine, CommitteeWorkspace, AuditWorkspace, AiCopilot, KnowledgeGraph,
   WorkflowEngine, ReportsAnalytics, Administration
 } from './components/RemainingModules';
+import VendorPortalSimulator from './components/VendorPortalSimulator';
 import './index.css';
 
 // --- TOAST NOTIFICATION SYSTEM --- //
@@ -181,9 +182,7 @@ const Sidebar = () => {
     <div className="sidebar" style={{ width: '280px', overflowY: 'auto' }}>
       <div className="brand animate-fade-in" style={{ paddingBottom: '1.5rem', borderBottom: '1px solid var(--glass-border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-          <div style={{ background: 'var(--accent-primary)', color: 'white', padding: '0.5rem', borderRadius: '8px', display: 'flex', boxShadow: '0 2px 10px rgba(37, 99, 235, 0.3)' }}>
-            <Briefcase size={20} />
-          </div>
+          <img src="/SECL_logo.svg" alt="SECL Logo" style={{ height: '36px', width: 'auto', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }} />
           <span style={{ fontSize: '1.25rem', fontWeight: '700', letterSpacing: '-0.5px', color: 'var(--text-primary)' }}>SECL Enterprise</span>
         </div>
         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: '600', paddingLeft: '3rem' }}>Intelligent Procurement</div>
@@ -201,6 +200,12 @@ const Sidebar = () => {
             </Link>
           )
         })}
+        <div style={{ marginTop: '2rem', borderTop: '1px solid var(--glass-border)', paddingTop: '1rem' }}>
+          <Link to="/vendor-portal-demo" className={`nav-item animate-fade-in ${location.pathname === '/vendor-portal-demo' ? 'active' : ''}`} style={{ padding: '0.85rem 1rem', borderRadius: '12px', color: location.pathname === '/vendor-portal-demo' ? 'var(--accent-primary)' : 'inherit' }}>
+            <UploadCloud size={20} />
+            <span style={{ fontSize: '0.95rem' }}>Vendor Portal (Demo)</span>
+          </Link>
+        </div>
       </nav>
 
       <div style={{ marginTop: 'auto', borderTop: '1px solid var(--glass-border)', paddingTop: '1rem' }} className="nav-menu">
@@ -268,6 +273,7 @@ function App() {
                 <Route path="/ai-engine" element={<AiEngineHub />} />
                 <Route path="/vendors" element={<VendorHub />} />
                 <Route path="/admin" element={<AdminHub />} />
+                <Route path="/vendor-portal-demo" element={<VendorPortalSimulator />} />
                 <Route path="/copilot" element={<AiCopilot />} />
               </Routes>
             </main>
